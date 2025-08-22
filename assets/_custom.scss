@@ -1,0 +1,15 @@
+/* You can add custom styles here. */
+
+// @import "plugins/numbered";
+
+.banner-row {
+  display: flex;          /* ensure flex even if utility changes */
+  justify-content: center;
+}
+
+/* keep the image tidy */
+.banner {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
