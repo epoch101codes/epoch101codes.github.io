@@ -1,0 +1,466 @@
+diff --git a/kexec/arch/i386/kexec-elf-x86.c b/kexec/arch/i386/kexec-elf-x86.c
+index 8bd5ef6..0b9993f 100644
+--- a/kexec/arch/i386/kexec-elf-x86.c
++++ b/kexec/arch/i386/kexec-elf-x86.c
+@@ -79,6 +79,7 @@ void elf_x86_usage(void)
+ 		"    --ramdisk=FILE        Use FILE as the kernel's initial ramdisk.\n"
+ 		"    --args-linux          Pass linux kernel style options\n"
+ 		"    --args-elf            Pass elf boot notes\n"
++		"    --relocs=FILE         Use FILE as the kernel reloc table (32bit only)\n"
+ 		);
+ 	
+ 	
+@@ -92,7 +93,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
+ 	const char *append = NULL;
+ 	int command_line_len;
+ 	int modified_cmdline_len;
+-	const char *ramdisk;
++	const char *ramdisk, *relocs;
+ 	unsigned long entry, max_addr;
+ 	int arg_style;
+ #define ARG_STYLE_ELF   0
+@@ -108,6 +109,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
+ 		{ "reuse-cmdline",	0, NULL, OPT_REUSE_CMDLINE },
+ 		{ "initrd",		1, NULL, OPT_RAMDISK },
+ 		{ "ramdisk",		1, NULL, OPT_RAMDISK },
++//		{ "relocs",		1, NULL, OPT_RELOCATE }, // do relocations of the 32bit code
+ 		{ "args-elf",		0, NULL, OPT_ARGS_ELF },
+ 		{ "args-linux",		0, NULL, OPT_ARGS_LINUX },
+ 		{ "args-none",		0, NULL, OPT_ARGS_NONE },
+@@ -142,6 +144,9 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
+ 		case OPT_RAMDISK:
+ 			ramdisk = optarg;
+ 			break;
++//		case OPT_RELOCATE:
++//			relocs = optarg;
++//			break;
+ 		case OPT_ARGS_ELF: 
+ 			arg_style = ARG_STYLE_ELF;
+ 			break;
+@@ -176,20 +181,25 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
+ 		}
+ 		modified_cmdline_len = strlen(modified_cmdline);
+ 	}
++	printf("elf_x86_load elf_exec_build_load\n");
+ 
+ 	/* Load the ELF executable */
+ 	elf_exec_build_load(info, &ehdr, buf, len, 0);
+ 
+ 	entry = ehdr.e_entry;
+ 	max_addr = elf_max_addr(&ehdr);
++	printf("elf_x86_load entry 0x%08x max_addr 0x%08x\n", entry, max_addr);
+ 
+ 	/* Do we want arguments? */
+ 	if (arg_style != ARG_STYLE_NONE) {
++		printf("elf_x86_load !ARG_STYLE_NONE\n");
+ 		/* Load the setup code */
+ 		elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
+ 			0, ULONG_MAX, 1, 0);
+ 	}
++	
+ 	if (arg_style == ARG_STYLE_NONE) {
++		printf("elf_x86_load ARG_STYLE_NONE\n");
+ 		info->entry = (void *)entry;
+ 
+ 	}
+@@ -198,6 +208,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
+ 		struct entry32_regs regs;
+ 		uint32_t arg1, arg2;
+ 
++		printf("elf_x86_load ARG_STYLE_ELF\n");
+ 		/* Setup the ELF boot notes */
+ 		note_base = elf_boot_notes(info, max_addr,
+ 					   command_line, command_line_len);
+@@ -226,6 +237,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
+ 		struct entry32_regs regs;
+ 		int rc = 0;
+ 
++		printf("elf_x86_load ARG_STYLE_LINUX\n");
+ 		/* Get the linux parameter header */
+ 		hdr = xmalloc(sizeof(*hdr));
+ 
+@@ -283,6 +295,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
+ 		elf_rel_set_symbol(&info->rhdr, "entry32_regs", &regs, sizeof(regs));
+ 	}
+ 	else {
++		printf("elf_x86_load ELSE\n");
+ 		die("Unknown argument style\n");
+ 	}
+ 
+diff --git a/kexec/arch/i386/kexec-x86-common.c b/kexec/arch/i386/kexec-x86-common.c
+index 609d35d..36258da 100644
+--- a/kexec/arch/i386/kexec-x86-common.c
++++ b/kexec/arch/i386/kexec-x86-common.c
+@@ -480,13 +480,15 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
+ 	}
+ 
+ 	/* just set 0 to 1 to enable printing for debugging */
+-#if 0
++#if 1
+ 	{
+-		int i;
++		int i, t;
+ 		printf("MEMORY RANGES\n");
+ 		for (i = 0; i < *ranges; i++) {
+-			printf("%016Lx-%016Lx (%d)\n", (*range)[i].start,
+-				(*range)[i].end, (*range)[i].type);
++			t = (*range)[i].type;
++			printf("%016Lx-%016Lx (%s)\n",
++			       (*range)[i].start, (*range)[i].end, 
++			       (t==RANGE_RAM) ? "RAM" : ((t==RANGE_RESERVED) ? "RESERVED" : ((t==RANGE_ACPI) ? "ACPI" : ((t==RANGE_ACPI_NVS) ? "ACPI_NVS" : "UKNOWN"))) );
+ 		}
+ 	}
+ #endif
+diff --git a/kexec/arch/x86_64/include/arch/options.h b/kexec/arch/x86_64/include/arch/options.h
+deleted file mode 120000
+index 047b0f9..0000000
+--- a/kexec/arch/x86_64/include/arch/options.h
++++ /dev/null
+@@ -1 +0,0 @@
+-../../../i386/include/arch/options.h
+\ No newline at end of file
+diff --git a/kexec/arch/x86_64/include/arch/options.h b/kexec/arch/x86_64/include/arch/options.h
+new file mode 100644
+index 0000000..047b0f9
+--- /dev/null
++++ b/kexec/arch/x86_64/include/arch/options.h
+@@ -0,0 +1 @@
++../../../i386/include/arch/options.h
+\ No newline at end of file
+diff --git a/kexec/kexec-elf-exec.c b/kexec/kexec-elf-exec.c
+index cb62d04..95c49e5 100644
+--- a/kexec/kexec-elf-exec.c
++++ b/kexec/kexec-elf-exec.c
+@@ -52,7 +52,7 @@ int build_elf_exec_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
+ int elf_exec_load(struct mem_ehdr *ehdr, struct kexec_info *info)
+ {
+ 	unsigned long base;
+-	int result;
++	int result, l;
+ 	size_t i;
+ 
+ 	if (!ehdr->e_phdr) {
+@@ -111,12 +111,35 @@ int elf_exec_load(struct mem_ehdr *ehdr, struct kexec_info *info)
+ 		}
+ 
+ 	}
+-
++	
++//	char *relocs = "/root/git/mklinux/arch/x86/boot/compressed/vmlinux.relocs";
++	char *relocs = "/boot/vmlinux.relocs";
++	char *relocs_buf;
++	off_t relocs_size;
++	long *relocs_array;
++	long __page_offset = 0xc0000000;
++	int relocs_num = 0;
++	int relocs_offset = 0x2000000; // TODO rework here base on mem_min
++	
++	if (relocs_offset) {
++	  relocs_buf = slurp_file (relocs, &relocs_size);
++	  relocs_num = relocs_size / sizeof(long); relocs_num--;
++	  relocs_array = ((long*) relocs_buf) +1;
++	  printf("relocs buffer %p size %ld num %d (__page_offset 0x%08lx)\n", 
++		 relocs_buf, relocs_size, relocs_num, __page_offset);
++	  printf("relocs buffer 0x%lx 0x%lx - 0x%lx 0x%lx\n", 
++		 relocs_array[0], relocs_array[1], relocs_array[(relocs_num -2)], relocs_array[(relocs_num -1)]);
++	}
++	
+ 	/* Read in the PT_LOAD segments */
++	printf("elf_exec_load: segments are %d\n", ehdr->e_phnum);
+ 	for(i = 0; i < ehdr->e_phnum; i++) {
+ 		struct mem_phdr *phdr;
+ 		size_t size;
+ 		phdr = &ehdr->e_phdr[i];
++		printf("elf_exec_load: segment %d p_type %d p_filesz %lld p_data %p p_paddr 0x%08llx p_memsz 0x%08llx\n",
++		       i, phdr->p_type, phdr->p_filesz, phdr->p_data, phdr->p_paddr, phdr->p_memsz);
++		
+ 		if (phdr->p_type != PT_LOAD) {
+ 			continue;
+ 		}
+@@ -124,6 +147,26 @@ int elf_exec_load(struct mem_ehdr *ehdr, struct kexec_info *info)
+ 		if (size > phdr->p_memsz) {
+ 			size = phdr->p_memsz;
+ 		}
++		
++		if (mem_min) // TODO rework on that considering relocation, crashkernel, etc.
++		  if (!base) // TODO rework
++		    base = mem_min - phdr->p_paddr; // TODO rework
++
++		if (relocs_offset) {
++			int stats=0;
++			//for every entry in the relocation array if does fit in the area apply the relocation
++			for (l=0; l<relocs_num; l++) {
++				long relocs_location = (relocs_array[l]-__page_offset);
++				if ( (phdr->p_paddr <= relocs_location) 
++				  && ((relocs_location < (phdr->p_paddr + phdr->p_memsz))) ) {
++					long * addr = (long *) ((long)phdr->p_data + (relocs_location-(long)(phdr->p_paddr)));
++					*addr += relocs_offset;
++					stats++;
++				}
++			}
++			printf("relocs: replaced %d absolute addresses\n", stats);
++		}
++		  
+ 		add_segment(info,
+ 			phdr->p_data, size,
+ 			phdr->p_paddr + base, phdr->p_memsz);
+diff --git a/kexec/kexec-syscall.h b/kexec/kexec-syscall.h
+index f4df45c..b359f44 100644
+--- a/kexec/kexec-syscall.h
++++ b/kexec/kexec-syscall.h
+@@ -75,6 +75,11 @@ static inline long kexec_reboot(void)
+ 	return (long) syscall(__NR_reboot, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_KEXEC, 0);
+ }
+ 
++#define LINUX_REBOOT_CMD_MKBSP 0xDEAD5E55
++static inline long kexec_boot(int cpu)
++{
++	return (long) syscall(__NR_reboot, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_MKBSP, cpu);
++}
+ 
+ #define KEXEC_ON_CRASH		0x00000001
+ #define KEXEC_PRESERVE_CONTEXT	0x00000002
+diff --git a/kexec/kexec.c b/kexec/kexec.c
+index abbe940..1d2f8bc 100644
+--- a/kexec/kexec.c
++++ b/kexec/kexec.c
+@@ -100,9 +100,15 @@ int valid_memory_range(struct kexec_info *info,
+ {
+ 	int i;
+ 	if (sstart > send) {
++		printf("valid_memory_range ERROR sstart(0x%08lx) > send(0x%08lx)\n",
++		       sstart, send);
+ 		return 0;
+ 	}
+-	if ((send > mem_max) || (sstart < mem_min)) {
++//	printf("valid_memory_range sstart(0x%08lx) < send(0x%08lx)\n", sstart, send);
++//	printf("valid_memory_range min(0x%llx) < max(0x%llx)\n", mem_min, mem_max);
++	if ((send > mem_max) || (sstart < mem_min)) {	  
++		printf("(send(0x%lx) > mem_max(0x%llx)) || (sstart(0x%lx) < mem_min(0x%llx))\n",
++		       send, mem_max, sstart, mem_min);
+ 		return 0;
+ 	}
+ 	for (i = 0; i < info->memory_ranges; i++) {
+@@ -119,8 +125,13 @@ int valid_memory_range(struct kexec_info *info,
+ 
+ 		/* Check to see if we are fully contained */
+ 		if ((mstart <= sstart) && (mend >= send)) {
++			printf("(mstart(0x%08x) <= sstart(0x%08x)) && (mend(0x%08x) >= send(0x%08x)) TRUE\n",
++				mstart, sstart, mend, send);
+ 			return 1;
+ 		}
++		printf("(mstart(0x%08x) <= sstart(0x%08x)) && (mend(0x%08x) >= send(0x%08x)) FALSE\n",
++		       mstart, sstart, mend, send);
++
+ 	}
+ 	return 0;
+ }
+@@ -129,7 +140,7 @@ static int valid_memory_segment(struct kexec_info *info,
+ 				struct kexec_segment *segment)
+ {
+ 	unsigned long sstart, send;
+-	sstart = (unsigned long)segment->mem;
++	sstart = (unsigned long)(void*)(segment->mem);
+ 	send   = sstart + segment->memsz - 1;
+ 
+ 	return valid_memory_range(info, sstart, send);
+@@ -143,11 +154,11 @@ void print_segments(FILE *f, struct kexec_info *info)
+ 	for (i = 0; i < info->nr_segments; i++) {
+ 		fprintf(f, "segment[%d].buf   = %p\n",	i,
+ 			info->segment[i].buf);
+-		fprintf(f, "segment[%d].bufsz = %zx\n", i,
++		fprintf(f, "segment[%d].bufsz = %d\n", i,
+ 			info->segment[i].bufsz);
+ 		fprintf(f, "segment[%d].mem   = %p\n",	i,
+ 			info->segment[i].mem);
+-		fprintf(f, "segment[%d].memsz = %zx\n", i,
++		fprintf(f, "segment[%d].memsz = %d\n", i,
+ 			info->segment[i].memsz);
+ 	}
+ }
+@@ -327,11 +338,11 @@ void add_segment_phys_virt(struct kexec_info *info,
+ 		base = virt_to_phys(base);
+ 
+ 	last = base + memsz -1;
+-	if (!valid_memory_range(info, base, last)) {
++/*	if (!valid_memory_range(info, base, last)) {
+ 		die("Invalid memory segment %p - %p\n",
+ 			(void *)base, (void *)last);
+ 	}
+-
++*/
+ 	size = (info->nr_segments + 1) * sizeof(info->segment[0]);
+ 	info->segment = xrealloc(info->segment, size);
+ 	info->segment[info->nr_segments].buf   = buf;
+@@ -667,9 +678,9 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
+ 	kernel = argv[fileind];
+ 	/* slurp in the input kernel */
+ 	kernel_buf = slurp_decompress_file(kernel, &kernel_size);
+-#if 0
+-	fprintf(stderr, "kernel: %p kernel_size: %lx\n", 
+-		kernel_buf, kernel_size);
++#if 1
++	fprintf(stderr, "kernel_image buffer: 0x%p kernel_image size: 0x%x (%d)\n", 
++		kernel_buf, kernel_size, kernel_size);
+ #endif
+ 
+ 	if (get_memory_ranges(&info.memory_range, &info.memory_ranges,
+@@ -716,23 +727,30 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
+ 		return -1;
+ 	}
+ 	info.kexec_flags |= native_arch;
++	printf("my_load: native_arch: %d i: %d (%s)\n", native_arch, i, file_type[i].name);
+ 
++	// TODO rewrite relocation as a generic parameter
++	// NOTE now relocation is handled at the beginning of the crashkernel area
+ 	if (file_type[i].load(argc, argv, kernel_buf,
+ 			      kernel_size, &info) < 0) {
+ 		fprintf(stderr, "Cannot load %s\n", kernel);
+ 		return -1;
+ 	}
++	printf("my_load: file_type[%d].load (%d, \"%s\", %p, %d, %p)\n",
++	       i, argc, argv, kernel_buf, kernel_size, &info);
++	
+ 	/* If we are not in native mode setup an appropriate trampoline */
+-	if (arch_compat_trampoline(&info) < 0) {
++/*	if (arch_compat_trampoline(&info) < 0) {
+ 		return -1;
+ 	}
+ 	if (info.kexec_flags & KEXEC_PRESERVE_CONTEXT) {
+ 		add_backup_segments(&info, mem_min, mem_max - mem_min + 1);
+ 	}
+-	/* Verify all of the segments load to a valid location in memory */
++*/	/* Verify all of the segments load to a valid location in memory */
+ 	for (i = 0; i < info.nr_segments; i++) {
+-		if (!valid_memory_segment(&info, info.segment +i)) {
+-			fprintf(stderr, "Invalid memory segment %p - %p\n",
++		if (!valid_memory_segment(&info, &(info.segment[i]))) {
++			fprintf(stderr, "my_load: Invalid memory segment [%d] %p - %p\n",
++				i,
+ 				info.segment[i].mem,
+ 				((char *)info.segment[i].mem) + 
+ 				info.segment[i].memsz);
+@@ -744,24 +762,27 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
+ 		return -1;
+ 	}
+ 	/* if purgatory is loaded update it */
+-	update_purgatory(&info);
++//	update_purgatory(&info);
+ 	if (entry)
+ 		info.entry = entry;
+-#if 0
++#if 1
+ 	fprintf(stderr, "kexec_load: entry = %p flags = %lx\n", 
+ 		info.entry, info.kexec_flags);
+ 	print_segments(stderr, &info);
+ #endif
++
++// LOAD KERNEL in KERNEL
+ 	result = kexec_load(
+ 		info.entry, info.nr_segments, info.segment, info.kexec_flags);
+ 	if (result != 0) {
+-		/* The load failed, print some debugging information */
++		// The load failed, print some debugging information 
+ 		fprintf(stderr, "kexec_load failed: %s\n", 
+ 			strerror(errno));
+ 		fprintf(stderr, "entry       = %p flags = %lx\n", 
+ 			info.entry, info.kexec_flags);
+ 		print_segments(stderr, &info);
+ 	}
++
+ 	return result;
+ }
+ 
+@@ -818,6 +839,13 @@ static int my_exec(void)
+ 	return -1;
+ }
+ 
++static int my_boot(int cpuid)
++{
++	kexec_boot(cpuid);
++	fprintf(stderr, "kexec boot done\n");
++	return 0;
++}
++
+ static int kexec_loaded(void);
+ 
+ static int load_jump_back_helper_image(unsigned long kexec_flags, void *entry)
+@@ -1038,6 +1066,8 @@ int main(int argc, char *argv[])
+ {
+ 	int do_load = 1;
+ 	int do_exec = 0;
++	int do_boot = 0;
++	int cpuid = 0;
+ 	int do_load_jump_back_helper = 0;
+ 	int do_shutdown = 1;
+ 	int do_sync = 1;
+@@ -1130,6 +1160,21 @@ int main(int argc, char *argv[])
+ 			do_sync = 0;
+ 			kexec_flags = KEXEC_ON_CRASH;
+ 			break;
++		case OPT_BOOT:
++			do_load = 0;
++			do_exec = 0;
++			do_shutdown = 0;
++			do_sync = 0;
++			do_boot = 1;
++			cpuid = strtoul(optarg, &endptr, 0);
++			if (*endptr) {
++				fprintf(stderr,
++					"Bad option value in --boot=%s\n",
++					optarg);
++				usage();
++				return 1;
++			}
++			break;
+ 		case OPT_MEM_MIN:
+ 			mem_min = strtoul(optarg, &endptr, 0);
+ 			if (*endptr) {
+@@ -1178,6 +1223,7 @@ int main(int argc, char *argv[])
+ 	optind = 1;
+ 
+ 	result = arch_process_options(argc, argv);
++	printf("result = %d\n", result);
+ 
+ 	/* Check for bogus options */
+ 	if (!do_load) {
+@@ -1220,6 +1266,12 @@ int main(int argc, char *argv[])
+ 	if ((result == 0) && do_load_jump_back_helper) {
+ 		result = my_load_jump_back_helper(kexec_flags, entry);
+ 	}
++	// mklinux support
++	//if ((result == 0) && do_boot) {
++	if (do_boot) {
++		printf("kexec do_boot on cpuid %d\n", cpuid);
++		result = my_boot(cpuid);
++	}
+ 
+ 	fflush(stdout);
+ 	fflush(stderr);
+diff --git a/kexec/kexec.h b/kexec/kexec.h
+index 9b59890..42f8bb3 100644
+--- a/kexec/kexec.h
++++ b/kexec/kexec.h
+@@ -174,6 +174,7 @@ extern int file_types;
+ #define OPT_LOAD		'l'
+ #define OPT_UNLOAD		'u'
+ #define OPT_TYPE		't'
++#define OPT_BOOT		'b'
+ #define OPT_PANIC		'p'
+ #define OPT_MEM_MIN             256
+ #define OPT_MEM_MAX             257
+@@ -194,12 +195,13 @@ extern int file_types;
+ 	{ "load-jump-back-helper", 0, 0, OPT_LOAD_JUMP_BACK_HELPER }, \
+ 	{ "entry",		1, 0, OPT_ENTRY }, \
+ 	{ "type",		1, 0, OPT_TYPE }, \
++	{ "boot",		1, 0, OPT_BOOT }, \
+ 	{ "load-panic",         0, 0, OPT_PANIC }, \
+ 	{ "mem-min",		1, 0, OPT_MEM_MIN }, \
+ 	{ "mem-max",		1, 0, OPT_MEM_MAX }, \
+ 	{ "reuseinitrd",	0, 0, OPT_REUSE_INITRD }, \
+ 
+-#define KEXEC_OPT_STR "hvdfxluet:p"
++#define KEXEC_OPT_STR "hvdfxluetb:p"
+ 
+ extern void die(char *fmt, ...);
+ extern void *xmalloc(size_t size);
