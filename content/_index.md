@@ -40,6 +40,6 @@ The native version of Popcorn Linux targets execution and runtime migration of n
 
 ## Credits
 ---
-Popcorn Linux is an open-source project of the Systems [Software Research Group](http://ssrg.ece.vt.edu/) at [Virginia Tech](http://www.vt.edu/).
+Popcorn Linux is an open-source project of the Systems [Software Research Group](http://ssrg.ece.vt.edu/) at [Virginia Tech](http://vt.edu/).
 
 This work is supported in part by ONR under grants N00014-13-1-0317, N00014-16-1-2104, and N00014-16-1-2711, AFOSR under grants FA9550-14-1-0163 and FA9550-16-1-0371, NAVSEA/NEEC under grants 3003279297 and N00174-16-C-0018, and US Naval Surface Warfare Center Dahlgren Division under grant N00174-20-1-0009. Any opinions, findings, and conclusions or recommendations expressed in this site are those of the author(s) and do not necessarily reflect the views of ONR, AFOSR, and NAVSEA.

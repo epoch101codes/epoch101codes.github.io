@@ -25,6 +25,6 @@ Source code and documentation is available online on [sourceforge](https://sourc
 
 ---
 
-This is an open-source project of the [Systems Software Research Group](https://www.ssrg.ece.vt.edu/) at [Virginia Tech](https://vt.edu/).
+This is an open-source project of the [Systems Software Research Group](https://ssrg.ece.vt.edu/) at [Virginia Tech](https://vt.edu/).
 
 This work was supported in part by ONR under grants N00014- 12-1-0880 and N00014-13-1-0317, and by US NSWC under contract N00178-09-D-3017/0022.  Any opinions, findings, and conclusions or recommendations expressed in this site are those of the author(s) and do not necessarily reflect the views of ONR and NSWC. 
