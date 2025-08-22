@@ -1,71 +1,45 @@
 ---
 weight: 1
 bookFlatSection: true
-title: "Example Site"
+title: "Home"
 ---
 
-# Introduction
+# Welcome to Popcorn Linux's Website!
 
-## Ferre hinnitibus erat accipitrem dixi Troiae tollens
+## News
+---
+- **January 2025**: Popcorn Linux’s Stramash OS is conditionally accepted at [ASPLOS'25](https://www.asplos-conference.org/asplos2025/). Paper is available [here](https://www.ssrg.ece.vt.edu/papers/asplos25.pdf).
+- **November 2024**: [CRIU project](https://criu.org/Main_Page) cites the following Popcorn Linux works: [Dapper/ICDCS'24](https://www.ssrg.ece.vt.edu/papers/icdcs24.pdf), [DynaCut/Middleware'23](https://www.ssrg.ece.vt.edu/papers/middleware23.pdf), [CRIU-RTX/Husain'23](https://vtechworks.lib.vt.edu/items/20cd28e6-1dba-4c21-b221-59f5f345205f), [HetMigrate/Bapat'22](https://vtechworks.lib.vt.edu/items/ba974ad9-eac9-4306-b3fc-5f0411b89b99).
+- **October 2024**: Popcorn Linux’s [HEXO extended kernel](https://www.computer.org/csdl/journal/cc/2024/04/10720200/215PAl5fP68) is accepted at [IEEE TCC](https://www.computer.org/csdl/journal/cc).
+- **August 2024**: Popcorn Linux’s extension to x86/RISC-V architectures is accepted at [Systor'24](https://www.ssrg.ece.vt.edu/papers/systor24.pdf). The paper is available [here](https://ssrg.ece.vt.edu/papers/systor24.pdf).
+- **April 2024**: Popcorn Linux’s lightweight program state rewriter is accepted at [ICDCS'24](https://icdcs2024.icdcs.org/). The paper is available [here](https://ssrg.ece.vt.edu/papers/icdcs24.pdf).
+- **December 2023**: Popcorn Linux-er Abilesh Sundarasamy defends his MS thesis and joins NVIDIA. Congratulations and best wishes Abilesh!
+- **May 2023**: Popcorn Linux-er Sandeep Errabelly defends his MS thesis and joins Apple. Congratulations and best wishes Sandeep!
+- **March 2023**: Popcorn Linux’s aggregate VM is accepted at [EuroSys'23](https://2023.eurosys.org/)! Paper to be available soon.
+- **January 2023**: Popcorn Linux’s aggregate VM is conditionally accepted at [EuroSys'23](https://2023.eurosys.org/).
+- **December 2022**: Popcorn Linux-er Abhishek Bapat defends his MS thesis and joins Zoox. Congratulations and best wishes Abhishek!
+- **August 2022**: Popcorn Linux’s container re-randomization work is accepted at MTD/CCS'22. Paper is available [here](https://www.ssrg.ece.vt.edu/papers/mtd22.pdf).
+- **May 2022**: Popcorn Linux hacker Ho-Ren (Jack) Chuang has successfully defended his PhD dissertation (to be available soon). Jack has joined ByteDance in Mountain View, CA. Congratulations and best wishes Dr. Chuang! 
+- **March 2022**: Popcorn Linux’s container instantiation -- H-Container -- is accepted at ACM TOCS. Paper is available [here](https://dl.acm.org/doi/10.1145/3524452)!
 
-Lorem markdownum, a quoque nutu est *quodcumque mandasset* veluti. Passim
-inportuna totidemque nympha fert; repetens pendent, poenarum guttura sed vacet
-non, mortali undas. Omnis pharetramque gramen portentificisque membris servatum
-novabis fallit de nubibus atque silvas mihi. **Dixit repetitaque Quid**; verrit
-longa; sententia [mandat](http://pastor-ad.io/questussilvas) quascumque nescio
-solebat [litore](http://lacrimas-ab.net/); noctes. *Hostem haerentem* circuit
-[plenaque tamen](http://www.sine.io/in).
+---
 
-- Pedum ne indigenae finire invergens carpebat
-- Velit posses summoque
-- De fumos illa foret
+The Popcorn Linux project is exploring how to improve the programmability of emerging heterogeneous hardware, in particular, those with Instruction Set Architecture (ISA)-diverse cores, from node-scale (e.g., Xeon/Xeon-Phi, ARM/x86, CPU/GPU/FPGAs) to rack-scale (e.g., Scale-out processors, Firebox, The Machine), in both native and virtualized settings. Additionally, the project is exploring how to automatically compile/synthesize/execute code on ISA-heterogeneous hardware.
 
-## Est simul fameque tauri qua ad
+<p align="center">
+  <img src="/images/popcorn-software-stack.png" alt="popcorn-software-stack">
+</p>
 
-Locum nullus nisi vomentes. Ab Persea sermone vela, miratur aratro; eandem
-Argolicas gener.
+<!-- Image can also be inserted like this: ![alt text](images/popcorn-software-stack.png "Title") -->
 
-## Me sol
+The project is exploring a replicated-kernel OS model for the Linux operating system. In this model, multiple Linux kernel instances running on multiple nodes collaborate each other to provide applications with a single-image operating system over the nodes. The kernels transparently provide a consistent memory view across the machine boundary, so threads in a process can be spread across the nodes without an explicit declaration of memory regions to share nor accessing through a custom memory APIs. The nodes are connected through a modern low-latency interconnect, and each of them might be based on different ISA and/or hardware configuration. In this way, Popcorn Linux utilizes the ISA-affinity in applications and scale out the system performance beyond a single system performance while retaining full POSIX compatibility.
 
-Nec dis certa fuit socer, Nonacria **dies** manet tacitaque sibi? Sucis est
-iactata Castrumque iudex, et iactato quoque terraeque es tandem et maternos
-vittis. Lumina litus bene poenamque animos callem ne tuas in leones illam dea
-cadunt genus, et pleno nunc in quod. Anumque crescentesque sanguinis
-[progenies](http://www.late.net/alimentavirides) nuribus rustica tinguet. Pater
-omnes liquido creditis noctem.
+Popcorn Linux uses an LLVM-based customized compiler that translates C/C++ applications into machine code suitable for execution and runtime migration across multiple instruction set architectures.  The compiler generates machine code for each target ISA on which Popcorn Linux runs and instruments the code with migration points.  The linker aligns global data, code and thread-local storage to be available at identical locations across all ISAs.  A run-time system translates a program's execution state (e.g., runtime stack and registers) at migration time between ISA-specific formats based on metadata generated by the compiler. 
 
-    if (mirrored(icmp_dvd_pim, 3, smbMirroredHard) != lion(clickImportQueue,
-            viralItunesBalancing, bankruptcy_file_pptp)) {
-        file += ip_cybercrime_suffix;
-    }
-    if (runtimeSmartRom == netMarketingWord) {
-        virusBalancingWin *= scriptPromptBespoke + raster(post_drive,
-                windowsSli);
-        cd = address_hertz_trojan;
-        soap_ccd.pcbServerGigahertz(asp_hardware_isa, offlinePeopleware, nui);
-    } else {
-        megabyte.api = modem_flowchart - web + syntaxHalftoneAddress;
-    }
-    if (3 < mebibyteNetworkAnimated) {
-        pharming_regular_error *= jsp_ribbon + algorithm * recycleMediaKindle(
-                dvrSyntax, cdma);
-        adf_sla *= hoverCropDrive;
-        templateNtfs = -1 - vertical;
-    } else {
-        expressionCompressionVariable.bootMulti = white_eup_javascript(
-                table_suffix);
-        guidPpiPram.tracerouteLinux += rtfTerabyteQuicktime(1,
-                managementRosetta(webcamActivex), 740874);
-    }
-    var virusTweetSsl = nullGigo;
+The native version of Popcorn Linux targets execution and runtime migration of native application across multiple ISA. Concerning the ongoing virtualization effort, Popcorn Xen, it focuses on [Unikernels](http://unikernel.org/): minimal small sized-guests where a single application is statically compiled with a small OS layer in a LibOS fashion.
 
-## Trepident sitimque
+## Credits
+---
+Popcorn Linux is an open-source project of the Systems [Software Research Group](http://ssrg.ece.vt.edu/) at [Virginia Tech](http://www.vt.edu/).
 
-Sentiet et ferali errorem fessam, coercet superbus, Ascaniumque in pennis
-mediis; dolor? Vidit imi **Aeacon** perfida propositos adde, tua Somni Fluctibus
-errante lustrat non.
-
-Tamen inde, vos videt e flammis Scythica parantem rupisque pectora umbras. Haec
-ficta canistris repercusso simul ego aris Dixit! Esse Fama trepidare hunc
-crescendo vigor ululasse vertice *exspatiantur* celer tepidique petita aversata
-oculis iussa est me ferro.
+This work is supported in part by ONR under grants N00014-13-1-0317, N00014-16-1-2104, and N00014-16-1-2711, AFOSR under grants FA9550-14-1-0163 and FA9550-16-1-0371, NAVSEA/NEEC under grants 3003279297 and N00174-16-C-0018, and US Naval Surface Warfare Center Dahlgren Division under grant N00174-20-1-0009. Any opinions, findings, and conclusions or recommendations expressed in this site are those of the author(s) and do not necessarily reflect the views of ONR, AFOSR, and NAVSEA.
